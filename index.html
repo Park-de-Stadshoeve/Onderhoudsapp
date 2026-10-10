@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <!-- Zorgt dat de pagina op een telefoon niet piepklein wordt weergegeven -->
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Stadshoeve Vrijwilligers</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: system-ui, sans-serif;
+      font-size: 18px;            /* groot genoeg om buiten te lezen */
+      background: #ffffff;
+      color: #1a1a1a;             /* bijna zwart: hoog contrast */
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header { background: #2e5d34; color: #ffffff; padding: 16px; }
+    h1 { margin: 0; font-size: 22px; }
+    main { flex: 1; padding: 16px; }
+    /* De hoofdknop staat onderaan: makkelijk te bereiken met je duim */
+    footer { padding: 16px; }
+    button {
+      width: 100%;
+      min-height: 56px;           /* ruim boven de minimale 48 tikgrootte */
+      font-size: 18px;
+      font-weight: bold;
+      background: #2e5d34;
+      color: #ffffff;
+      border: none;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Stadshoeve Vrijwilligers</h1>
+  </header>
+  <main>
+    <p>Welkom! Dit wordt de app voor de vrijwilligers van Park de Stadshoeve.</p>
+    <p>Hier komen straks de taken van jouw werkgroep.</p>
+  </main>
+  <footer>
+    <button onclick="alert('Het werkt!')">Tik hier om te testen</button>
+  </footer>
+</body>
+</html>
