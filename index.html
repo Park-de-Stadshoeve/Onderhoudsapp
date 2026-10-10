@@ -2,47 +2,224 @@
 <html lang="nl">
 <head>
   <meta charset="UTF-8">
-  <!-- Zorgt dat de pagina op een telefoon niet superklein wordt weergegeven -->
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Stadshoeve Vrijwilligers</title>
   <style>
+    /* ===== KLEUREN: hier op één plek, zodat je ze makkelijk kunt aanpassen ===== */
+    :root {
+      --groen: #2e5d34;
+      --tekst: #1a1a1a;
+      --grijs: #555555;
+      --rand: #cccccc;
+      --achtergrond: #f4f4f2;
+      --rood: #a4161a;
+    }
+    * { box-sizing: border-box; }
     body {
       margin: 0;
       font-family: system-ui, sans-serif;
-      font-size: 18px;            /* groot genoeg om buiten te lezen */
-      background: #ffffff;
-      color: #1a1a1a;             /* bijna zwart: hoog contrast */
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-    header { background: #2e5d34; color: #ffffff; padding: 16px; }
-    h1 { margin: 0; font-size: 22px; }
-    main { flex: 1; padding: 16px; }
-    /* De hoofdknop staat onderaan: makkelijk te bereiken met je duim */
-    footer { padding: 16px; }
-    button {
-      width: 100%;
-      min-height: 56px;           /* ruim boven de minimale 48 tikgrootte */
       font-size: 18px;
-      font-weight: bold;
-      background: #2e5d34;
-      color: #ffffff;
-      border: none;
-      border-radius: 8px;
+      color: var(--tekst);
+      background: var(--achtergrond);
     }
+    header { background: var(--groen); color: #ffffff; padding: 16px; position: sticky; top: 0; }
+    h1 { margin: 0; font-size: 22px; }
+    main { padding: 16px; padding-bottom: 100px; } /* ruimte vrij voor het menu onderaan */
+
+    /* Knoppen om een werkgroep te kiezen */
+    .kiezer { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+    .kiezer button {
+      min-height: 48px; padding: 0 16px; font-size: 16px;
+      border: 2px solid var(--groen); border-radius: 24px;
+      background: #ffffff; color: var(--groen);
+    }
+    .kiezer button[aria-pressed="true"] { background: var(--groen); color: #ffffff; font-weight: bold; }
+
+    /* Eén taak */
+    .taak { background: #ffffff; border: 1px solid var(--rand); border-radius: 8px; padding: 16px; margin-bottom: 12px; }
+    .taak h2 { margin: 0 0 4px; font-size: 19px; }
+    .taak p { margin: 4px 0; }
+    .details { color: var(--grijs); font-size: 16px; }
+    .te-laat { color: var(--rood); font-weight: bold; }
+    .status { display: inline-block; margin-top: 8px; padding: 4px 10px; border-radius: 4px; font-size: 16px; font-weight: bold; }
+    .status-open { background: #e8eef9; color: #1d3d7a; }
+    .status-gereed { background: #e3f1e4; color: #1e4d24; }
+    .leeg { color: var(--grijs); }
+
+    /* Menu onderaan: binnen bereik van je duim */
+    nav {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      display: flex; background: #ffffff; border-top: 1px solid var(--rand);
+      padding-bottom: env(safe-area-inset-bottom); /* ruimte voor de streep onderaan op iPhones */
+    }
+    nav button { flex: 1; min-height: 64px; font-size: 16px; border: none; background: none; color: var(--grijs); }
+    nav button[aria-current="page"] { color: var(--groen); font-weight: bold; border-top: 4px solid var(--groen); }
   </style>
 </head>
 <body>
-  <header>
-    <h1>Stadshoeve Vrijwilligers</h1>
-  </header>
-  <main>
-    <p>Welkom! Dit wordt de app voor de vrijwilligers van Park de Stadshoeve.</p>
-    <p>Hier komen straks de taken van jouw werkgroep.</p>
-  </main>
-  <footer>
-    <button onclick="alert('Het werkt!')">Tik hier om te testen</button>
-  </footer>
+  <header><h1 id="titel">Mijn taken</h1></header>
+
+  <!-- Hier zet het script de taken neer -->
+  <main id="inhoud"></main>
+
+  <nav>
+    <button id="knop-mijn">Mijn taken</button>
+    <button id="knop-werkgroep">Werkgroep</button>
+  </nav>
+
+  <script>
+    // ===== VOORBEELDGEGEVENS =====
+    // Tijdelijk: later komen deze uit de database.
+    // Gebruik hier NOOIT echte namen: deze code is openbaar.
+
+    // Wie is er "ingelogd"? (nep, om te testen)
+    const ingelogdeGebruiker = {
+      naam: "Anna",
+      werkgroepen: ["Dieren", "Klussen"],
+      magAllesZien: false   // true = bestuur of coördinator onderhoud
+    };
+
+    const alleWerkgroepen = ["Dieren", "Tuinen", "Klussen", "Educatie", "Evenementen", "Geschiedenis"];
+
+    const taken = [
+      { titel: "Hek weide 2 repareren", omschrijving: "Onderste plank zit los bij de ingang.", werkgroep: "Klussen", toegewezenAan: "Anna", deadline: "2026-10-08", status: "open" },
+      { titel: "Hooi bestellen", omschrijving: "Voorraad op de hooizolder is bijna op.", werkgroep: "Dieren", toegewezenAan: "Anna", deadline: "2026-10-14", status: "open" },
+      { titel: "Waterpomp winterklaar maken", omschrijving: "Pomp bij het waterspelen aftappen.", werkgroep: "Klussen", toegewezenAan: "Anna", deadline: "2026-10-03", status: "gereed" },
+      { titel: "Konijnenhok extra uitmesten", omschrijving: "Na de herfstvakantie.", werkgroep: "Dieren", toegewezenAan: "Piet", deadline: "2026-10-27", status: "open" },
+      { titel: "Lampen schuur vervangen", omschrijving: "Twee tl-buizen zijn kapot.", werkgroep: "Klussen", toegewezenAan: "", deadline: "2026-10-20", status: "open" },
+      { titel: "Bollen planten belevenistuin", omschrijving: "Bollen liggen in de kas.", werkgroep: "Tuinen", toegewezenAan: "Fatima", deadline: "2026-10-25", status: "open" },
+      { titel: "Lampionnen voorbereiden", omschrijving: "Materiaal klaarzetten voor de workshop.", werkgroep: "Evenementen", toegewezenAan: "Kees", deadline: "2026-11-05", status: "open" }
+    ];
+
+    // ===== HULPFUNCTIES =====
+
+    // De datum van vandaag, in dezelfde vorm als de deadlines ("2026-10-10")
+    const vandaag = new Date().toISOString().slice(0, 10);
+
+    // Zet "2026-10-14" om in "di 14 okt"
+    function leesbareDatum(datum) {
+      return new Date(datum).toLocaleDateString("nl-NL", { weekday: "short", day: "numeric", month: "short" });
+    }
+
+    // Volgorde: open taken eerst, daarna op deadline (vroegste bovenaan)
+    function sorteerTaken(a, b) {
+      if (a.status !== b.status) return a.status === "open" ? -1 : 1;
+      return a.deadline.localeCompare(b.deadline);
+    }
+
+    // Maakt het "kaartje" voor één taak
+    function maakTaakKaart(taak) {
+      const kaart = document.createElement("article");
+      kaart.className = "taak";
+
+      const titel = document.createElement("h2");
+      titel.textContent = taak.titel;
+      kaart.append(titel);
+
+      const omschrijving = document.createElement("p");
+      omschrijving.textContent = taak.omschrijving;
+      kaart.append(omschrijving);
+
+      const details = document.createElement("p");
+      details.className = "details";
+      const wie = taak.toegewezenAan || "Nog niemand";
+      details.textContent = "Uiterlijk " + leesbareDatum(taak.deadline) + " · " + taak.werkgroep + " · " + wie;
+      kaart.append(details);
+
+      // Waarschuwing in tekst én kleur (nooit alleen kleur)
+      if (taak.status === "open" && taak.deadline < vandaag) {
+        const teLaat = document.createElement("p");
+        teLaat.className = "te-laat";
+        teLaat.textContent = "⚠ Te laat";
+        kaart.append(teLaat);
+      }
+
+      const status = document.createElement("span");
+      status.className = "status status-" + taak.status;
+      status.textContent = taak.status === "gereed" ? "✓ Gereed" : "○ Open";
+      kaart.append(status);
+
+      return kaart;
+    }
+
+    // Zet een lijst taken op het scherm
+    function toonLijst(lijst) {
+      const inhoud = document.getElementById("inhoud");
+      if (lijst.length === 0) {
+        const leeg = document.createElement("p");
+        leeg.className = "leeg";
+        leeg.textContent = "Er zijn hier geen taken.";
+        inhoud.append(leeg);
+        return;
+      }
+      lijst.sort(sorteerTaken);
+      lijst.forEach(taak => inhoud.append(maakTaakKaart(taak)));
+    }
+
+    // Laat in het menu zien welk scherm open is
+    function markeerMenu(scherm) {
+      const knopMijn = document.getElementById("knop-mijn");
+      const knopWerkgroep = document.getElementById("knop-werkgroep");
+      if (scherm === "mijn") {
+        knopMijn.setAttribute("aria-current", "page");
+        knopWerkgroep.removeAttribute("aria-current");
+      } else {
+        knopWerkgroep.setAttribute("aria-current", "page");
+        knopMijn.removeAttribute("aria-current");
+      }
+    }
+
+    // ===== SCHERMEN =====
+
+    function toonMijnTaken() {
+      document.getElementById("titel").textContent = "Mijn taken";
+      document.getElementById("inhoud").replaceChildren(); // scherm leegmaken
+      const mijnTaken = taken.filter(taak => taak.toegewezenAan === ingelogdeGebruiker.naam);
+      toonLijst(mijnTaken);
+      markeerMenu("mijn");
+    }
+
+    let gekozenWerkgroep = ingelogdeGebruiker.werkgroepen[0];
+
+    function toonWerkgroep() {
+      document.getElementById("titel").textContent = "Taken werkgroep";
+      const inhoud = document.getElementById("inhoud");
+      inhoud.replaceChildren();
+
+      // Welke keuzes krijgt deze persoon?
+      const keuzes = ingelogdeGebruiker.magAllesZien
+        ? ["Alles", ...alleWerkgroepen]
+        : ingelogdeGebruiker.werkgroepen;
+      if (!keuzes.includes(gekozenWerkgroep)) gekozenWerkgroep = keuzes[0];
+
+      // Keuzeknoppen alleen tonen als er iets te kiezen valt
+      if (keuzes.length > 1) {
+        const kiezer = document.createElement("div");
+        kiezer.className = "kiezer";
+        keuzes.forEach(naam => {
+          const knop = document.createElement("button");
+          knop.textContent = naam;
+          knop.setAttribute("aria-pressed", naam === gekozenWerkgroep);
+          knop.addEventListener("click", () => {
+            gekozenWerkgroep = naam;
+            toonWerkgroep();
+          });
+          kiezer.append(knop);
+        });
+        inhoud.append(kiezer);
+      }
+
+      const lijst = gekozenWerkgroep === "Alles"
+        ? [...taken]
+        : taken.filter(taak => taak.werkgroep === gekozenWerkgroep);
+      toonLijst(lijst);
+      markeerMenu("werkgroep");
+    }
+
+    // ===== START =====
+    document.getElementById("knop-mijn").addEventListener("click", toonMijnTaken);
+    document.getElementById("knop-werkgroep").addEventListener("click", toonWerkgroep);
+    toonMijnTaken();
+  </script>
 </body>
 </html>
