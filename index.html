@@ -250,6 +250,9 @@
           kaart.append(maakToewijsKeuze(taak));              // bestuur/coördinator: keuzelijst
         } else if (magZelfOppakken(taak)) {
           kaart.append(maakTweedeKnop("🙋 Ik doe dit", () => wijsToe(taak, mijnToewijsNaam)));
+        } else if (isMijnTaak(taak)) {
+          // Je eigen taak: je kunt hem teruggeven ("" = aan niemand)
+          kaart.append(maakTweedeKnop("↩ Teruggeven", () => wijsToe(taak, "")));
         }
       }
 
@@ -327,7 +330,7 @@
       const vorige = taak.toegewezenAan;   // onthouden voor "Ongedaan maken"
       taak.toegewezenAan = naam;
       verversScherm();
-      const tekst = naam ? "Toegewezen aan " + naam : "Toewijzing weggehaald";
+      const tekst = naam ? "Toegewezen aan " + naam : "Taak is weer vrij";
       toonMelding(tekst, () => {
         taak.toegewezenAan = vorige;
         verversScherm();
