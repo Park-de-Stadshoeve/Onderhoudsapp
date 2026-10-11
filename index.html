@@ -220,12 +220,12 @@
           kaart.append(foto);
         }
         if (magGereedMelden(taak)) {
-          kaart.append(maakTweedeKnop("↺ Weer openen", () => heropenTaak(taak)));
           const fotoTekst = taak.foto ? "📷 Foto vervangen" : "📷 Foto toevoegen";
           kaart.append(maakFotoKnop(taak, fotoTekst));
           if (taak.foto) {
             kaart.append(maakTweedeKnop("Foto verwijderen", () => verwijderFoto(taak)));
           }
+          kaart.append(maakTweedeKnop("↺ Weer openen", () => heropenTaak(taak)));
         }
       }
 
@@ -264,7 +264,7 @@
       // Privacy-tip, in gewone taal
       const tip = document.createElement("p");
       tip.className = "foto-tip";
-      tip.textContent = "Fotografeer alleen het werk, geen mensen.";
+      tip.textContent = "Fotografeer alleen het werk, geen mensen ivm AVG.";
       blok.append(tip);
 
       return blok;
