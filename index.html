@@ -115,7 +115,7 @@
     // Wie is er "ingelogd"? (nep, om te testen)
     const ingelogdeGebruiker = {
       naam: "Anna",
-      werkgroepen: ["Dieren", "Klussen"],
+      werkgroepen: ["Dieren"],
       magAllesZien: false   // true = bestuur of coördinator onderhoud
     };
 
@@ -131,8 +131,8 @@
       { titel: "Lampionnen voorbereiden", omschrijving: "Materiaal klaarzetten voor de workshop.", werkgroep: "Evenementen", toegewezenAan: "Kees", deadline: "2026-11-05", status: "open" }
     ];
 
-    // NIEUW: hoe lang de melding "Ongedaan maken" zichtbaar blijft (in milliseconden: 6000 = 6 seconden)
-    const MELDING_DUUR = 6000;
+    // NIEUW: hoe lang de melding "Ongedaan maken" zichtbaar blijft (in milliseconden: 10000 = 10 seconden)
+    const MELDING_DUUR = 10000;
 
     // ===== HULPFUNCTIES =====
 
@@ -250,7 +250,7 @@
       // Privacy-tip, in gewone taal
       const tip = document.createElement("p");
       tip.className = "foto-tip";
-      tip.textContent = "Fotografeer alleen het werk, geen mensen.";
+      tip.textContent = "Fotografeer het werk, geen mensen ivm AVG.";
       blok.append(tip);
 
       return blok;
