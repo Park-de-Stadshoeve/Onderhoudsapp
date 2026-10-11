@@ -22,11 +22,11 @@
       color: var(--tekst);
       background: var(--achtergrond);
     }
-    header { background: var(--groen); color: #ffffff; padding: 16px; position: sticky; top: 0; }
+    header { background: var(--groen); color: #ffffff; padding: 16px; position: sticky; top: 0; z-index: 1; }
     h1 { margin: 0; font-size: 22px; }
     main { padding: 16px; padding-bottom: 180px; } /* ruimte vrij voor menu én melding onderaan */
 
-    /* Knoppen om een werkgroep te kiezen */
+    /* Keuzeknoppen (werkgroepen, plekken, gevaarlijk ja/nee) */
     .kiezer { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
     .kiezer button {
       min-height: 48px; padding: 0 16px; font-size: 16px;
@@ -35,7 +35,7 @@
     }
     .kiezer button[aria-pressed="true"] { background: var(--groen); color: #ffffff; font-weight: bold; }
 
-    /* Eén taak */
+    /* Eén taak of melding */
     .taak { background: #ffffff; border: 1px solid var(--rand); border-radius: 8px; padding: 16px; margin-bottom: 12px; }
     .taak h2 { margin: 0 0 4px; font-size: 19px; }
     .taak p { margin: 4px 0; }
@@ -46,14 +46,14 @@
     .status-gereed { background: #e3f1e4; color: #1e4d24; }
     .leeg { color: var(--grijs); }
 
-    /* Knop "Gereed melden" (de hoofdactie, daarom groot en gevuld) */
+    /* Hoofdknop (groot en gevuld) */
     .knop-gereed {
       display: block; width: 100%; min-height: 56px; margin-top: 12px;
       font-size: 18px; font-weight: bold;
       background: var(--groen); color: #ffffff; border: none; border-radius: 8px;
     }
 
-    /* Knop "Foto toevoegen" (tweede actie, daarom alleen een rand) */
+    /* Knop "Foto" (rand in groen) */
     .knop-foto {
       display: flex; align-items: center; justify-content: center;
       width: 100%; min-height: 48px; margin-top: 12px;
@@ -64,7 +64,7 @@
     .foto-tip { font-size: 16px; color: var(--grijs); }
     .foto { display: block; width: 100%; margin-top: 12px; border-radius: 8px; }
 
-    /* Tweede knoppen ("Weer openen", "Foto verwijderen", "Ik doe dit"): alleen een grijze rand */
+    /* Tweede knoppen: alleen een grijze rand */
     .knop-tweede {
       display: block; width: 100%; min-height: 48px; margin-top: 12px;
       font-size: 16px; font-weight: bold;
@@ -72,7 +72,7 @@
       background: #ffffff; color: var(--tekst);
     }
 
-    /* NIEUW: keuzelijst "Toegewezen aan" (voor bestuur en coördinator) */
+    /* Keuzelijst "Toegewezen aan" (voor bestuur en coördinator) */
     .toewijzen { display: block; margin-top: 12px; font-size: 16px; font-weight: bold; }
     .toewijzen select {
       display: block; width: 100%; min-height: 48px; margin-top: 4px; padding: 0 12px;
@@ -80,6 +80,16 @@
       border: 2px solid var(--grijs); border-radius: 8px;
       background: #ffffff; color: var(--tekst);
     }
+
+    /* NIEUW: meldformulier */
+    .veld { margin-bottom: 24px; }
+    .veld-titel { display: block; margin: 0 0 8px; font-weight: bold; }
+    textarea {
+      display: block; width: 100%; min-height: 96px; padding: 12px;
+      font-family: inherit; font-size: 18px;
+      border: 2px solid var(--grijs); border-radius: 8px;
+    }
+    .fout { color: var(--rood); font-weight: bold; }
 
     /* Maakt iets onzichtbaar maar laat het wel werken (voor de foto-invoer) */
     .verborgen { position: absolute; width: 1px; height: 1px; opacity: 0; }
@@ -103,14 +113,14 @@
       display: flex; background: #ffffff; border-top: 1px solid var(--rand);
       padding-bottom: env(safe-area-inset-bottom); /* ruimte voor de streep onderaan op iPhones */
     }
-    nav button { flex: 1; min-height: 64px; font-size: 16px; border: none; background: none; color: var(--grijs); }
+    nav button { flex: 1; min-height: 64px; padding: 0 4px; font-size: 16px; border: none; background: none; color: var(--grijs); }
     nav button[aria-current="page"] { color: var(--groen); font-weight: bold; border-top: 4px solid var(--groen); }
   </style>
 </head>
 <body>
   <header><h1 id="titel">Mijn taken</h1></header>
 
-  <!-- Hier zet het script de taken neer -->
+  <!-- Hier zet het script de inhoud van het scherm neer -->
   <main id="inhoud"></main>
 
   <!-- Melding die even verschijnt na een actie -->
@@ -119,9 +129,12 @@
     <button id="knop-ongedaan">Ongedaan maken</button>
   </div>
 
+  <!-- NIEUW: vier knoppen. "data-scherm" zegt welk scherm bij de knop hoort. -->
   <nav>
-    <button id="knop-mijn">Mijn taken</button>
-    <button id="knop-werkgroep">Werkgroep</button>
+    <button data-scherm="mijn">Mijn taken</button>
+    <button data-scherm="werkgroep">Werkgroep</button>
+    <button data-scherm="melden">Melden</button>
+    <button data-scherm="meldingen">Meldingen</button>
   </nav>
 
   <script>
@@ -131,38 +144,47 @@
 
     // Wie is er "ingelogd"? (nep, om te testen)
     const ingelogdeGebruiker = {
-      naam: "Kirsten",
+      naam: "Anna",
       werkgroepen: ["Dieren", "Klussen"],
       magAllesZien: false,  // true = bestuur of coördinator onderhoud
-      isFrion: false        // NIEUW: true = Frion-begeleider
+      isFrion: false        // true = Frion-begeleider
     };
 
-    const alleWerkgroepen = ["Dieren", "Tuinen", "Klussen", "Avontuurlijk Spelen", "Educatie", "Evenementen", "Geschiedenis"];
+    const alleWerkgroepen = ["Dieren", "Tuinen", "Avontuurlijk spelen", "Klussen", "Educatie", "Evenementen", "Geschiedenis"];
 
-    // NIEUW: alle vrijwilligers en hun werkgroepen. Nodig voor de keuzelijst bij toewijzen.
+    // Alle vrijwilligers en hun werkgroepen. Nodig voor de keuzelijst bij toewijzen.
     const vrijwilligers = [
-      { naam: "Kirsten",   werkgroepen: ["Dieren", "Klussen"] },
+      { naam: "Anna",   werkgroepen: ["Dieren", "Klussen"] },
       { naam: "Piet",   werkgroepen: ["Dieren"] },
-      { naam: "Fatima", werkgroepen: ["Tuinen", "Avontuurlijk Spelen"] },
+      { naam: "Fatima", werkgroepen: ["Tuinen"] },
       { naam: "Kees",   werkgroepen: ["Evenementen", "Klussen"] },
-      { naam: "Sanne",  werkgroepen: ["Educatie", "Geschiedenis"] },
-      { naam: "Paul",  werkgroepen: ["Tuinen", "Geschiedenis"] }
+      { naam: "Sanne",  werkgroepen: ["Educatie", "Geschiedenis", "Avontuurlijk spelen"] }
     ];
 
-    // NIEUW: de naam waarmee een taak aan Frion als groep wordt toegewezen
+    // De naam waarmee een taak aan Frion als groep wordt toegewezen
     const FRION = "Frion";
 
     const taken = [
-      { titel: "Hek weide 2 repareren", omschrijving: "Onderste plank zit los bij de ingang.", werkgroep: "Klussen", toegewezenAan: "Kirsten", deadline: "2026-10-08", status: "open" },
-      { titel: "Hooi bestellen", omschrijving: "Voorraad op de hooizolder is bijna op.", werkgroep: "Dieren", toegewezenAan: "Kirsten", deadline: "2026-10-14", status: "open" },
-      { titel: "Waterpomp winterklaar maken", omschrijving: "Pomp bij het waterspelen aftappen.", werkgroep: "Klussen", toegewezenAan: "Kirsten", deadline: "2026-10-03", status: "gereed", gereedGemeldDoor: "Kirsten" },
+      { titel: "Hek weide 2 repareren", omschrijving: "Onderste plank zit los bij de ingang.", werkgroep: "Klussen", toegewezenAan: "Anna", deadline: "2026-10-08", status: "open" },
+      { titel: "Hooi bestellen", omschrijving: "Voorraad op de hooizolder is bijna op.", werkgroep: "Dieren", toegewezenAan: "Anna", deadline: "2026-10-14", status: "open" },
+      { titel: "Waterpomp winterklaar maken", omschrijving: "Pomp bij het waterspelen aftappen.", werkgroep: "Klussen", toegewezenAan: "Anna", deadline: "2026-10-03", status: "gereed", gereedGemeldDoor: "Anna" },
       { titel: "Konijnenhok extra uitmesten", omschrijving: "Na de herfstvakantie.", werkgroep: "Dieren", toegewezenAan: "Piet", deadline: "2026-10-27", status: "open" },
       { titel: "Lampen schuur vervangen", omschrijving: "Twee tl-buizen zijn kapot.", werkgroep: "Klussen", toegewezenAan: "", deadline: "2026-10-20", status: "open" },
       { titel: "Drinkbak ezels schoonmaken", omschrijving: "Algen verwijderen en vers water.", werkgroep: "Dieren", toegewezenAan: "", deadline: "2026-10-16", status: "open" },
       { titel: "Stal uitmesten", omschrijving: "Alle zes boxen, vers stro erin.", werkgroep: "Dieren", toegewezenAan: "Frion", deadline: "2026-10-13", status: "open" },
+      { titel: "Valondergrond Hummelhoeve aanvullen", omschrijving: "Houtsnippers bij de glijbaan.", werkgroep: "Avontuurlijk spelen", toegewezenAan: "", deadline: "2026-10-22", status: "open" },
       { titel: "Bollen planten belevenistuin", omschrijving: "Bollen liggen in de kas.", werkgroep: "Tuinen", toegewezenAan: "Fatima", deadline: "2026-10-25", status: "open" },
-      { titel: "Pad in de Hummelhoeve vegen", omschrijving: "Met de harde bezem.", werkgroep: "Avontuurlijk Spelen", toegewezenAan: "Fatima", deadline: "2026-10-25", status: "open" },
       { titel: "Lampionnen voorbereiden", omschrijving: "Materiaal klaarzetten voor de workshop.", werkgroep: "Evenementen", toegewezenAan: "Kees", deadline: "2026-11-05", status: "open" }
+    ];
+
+    // NIEUW: vaste plekken op het park, voor "Waar is het?"
+    const PLEKKEN = ["Stal", "Weides", "Hummelhoeve", "Speelkasteel", "Waterspelen", "Trekvlot",
+                     "Wilgenburcht", "Moestuin", "Belevenistuin", "Gebouw", "Overig"];
+
+    // NIEUW: voorbeeldmeldingen. status is "nieuw" of "afgehandeld".
+    const meldingen = [
+      { plek: "Speelkasteel", tekst: "Splinter in de leuning van de trap.", gevaarlijk: true, gemeldDoor: "Anna", datum: "2026-10-09", status: "nieuw", foto: "" },
+      { plek: "Weides", tekst: "Hek weide 3 gaat niet meer dicht.", gevaarlijk: false, gemeldDoor: "Piet", datum: "2026-10-05", status: "afgehandeld", foto: "" }
     ];
 
     // Hoe lang de melding "Ongedaan maken" zichtbaar blijft (in milliseconden: 6000 = 6 seconden)
@@ -178,37 +200,85 @@
       return new Date(datum).toLocaleDateString("nl-NL", { weekday: "short", day: "numeric", month: "short" });
     }
 
-    // Volgorde: open taken eerst, daarna op deadline (vroegste bovenaan)
+    // Volgorde taken: open eerst, daarna op deadline (vroegste bovenaan)
     function sorteerTaken(a, b) {
       if (a.status !== b.status) return a.status === "open" ? -1 : 1;
       return a.deadline.localeCompare(b.deadline);
     }
 
-    // NIEUW: onder welke naam wijs je een taak aan jezelf toe?
+    // Onder welke naam wijs je een taak aan jezelf toe?
     // Een Frion-begeleider pakt taken op namens Frion, de rest onder eigen naam.
     const mijnToewijsNaam = ingelogdeGebruiker.isFrion ? FRION : ingelogdeGebruiker.naam;
 
-    // NIEUW: is deze taak van mij? (of van Frion, als ik Frion-begeleider ben)
+    // Is deze taak van mij? (of van Frion, als ik Frion-begeleider ben)
     function isMijnTaak(taak) {
       return taak.toegewezenAan === mijnToewijsNaam;
     }
 
     // Mag de ingelogde gebruiker deze taak gereed melden?
-    // Ja als: je alles mag zien (bestuur/coördinator), de taak in jouw werkgroep valt,
-    // of de taak aan jou is toegewezen.
     function magGereedMelden(taak) {
       return ingelogdeGebruiker.magAllesZien
         || ingelogdeGebruiker.werkgroepen.includes(taak.werkgroep)
         || isMijnTaak(taak);
     }
 
-    // NIEUW: mag ik deze taak zelf oppakken met "Ik doe dit"?
-    // Ja als: de taak open is, nog van niemand is, en in mijn werkgroep valt.
+    // Mag ik deze taak zelf oppakken met "Ik doe dit"?
     function magZelfOppakken(taak) {
       return taak.status === "open"
         && !taak.toegewezenAan
         && ingelogdeGebruiker.werkgroepen.includes(taak.werkgroep);
     }
+
+    // Maakt een eenvoudige tweede knop (met rand)
+    function maakTweedeKnop(tekst, actie) {
+      const knop = document.createElement("button");
+      knop.className = "knop-tweede";
+      knop.textContent = tekst;
+      knop.addEventListener("click", actie);
+      return knop;
+    }
+
+    // Maakt een grote hoofdknop
+    function maakHoofdKnop(tekst, actie) {
+      const knop = document.createElement("button");
+      knop.className = "knop-gereed";
+      knop.textContent = tekst;
+      knop.addEventListener("click", actie);
+      return knop;
+    }
+
+    // NIEUW (aangepast): maakt een foto-knop die je overal kunt gebruiken.
+    // "bijFoto" is een functie die bepaalt wat er met de gekozen foto gebeurt.
+    function maakFotoKnop(knopTekst, bijFoto) {
+      const blok = document.createElement("div");
+
+      const label = document.createElement("label");
+      label.className = "knop-foto";
+      label.textContent = knopTekst;
+
+      const invoer = document.createElement("input");
+      invoer.type = "file";
+      invoer.accept = "image/*";         // alleen foto's
+      invoer.className = "verborgen";
+      invoer.addEventListener("change", () => {
+        const bestand = invoer.files[0];
+        if (!bestand) return;            // niets gekozen: niets doen
+        // Tijdelijk: de foto staat alleen in het geheugen van de telefoon.
+        bijFoto(URL.createObjectURL(bestand));
+      });
+      label.append(invoer);
+      blok.append(label);
+
+      // Privacy-tip, in gewone taal
+      const tip = document.createElement("p");
+      tip.className = "foto-tip";
+      tip.textContent = "Fotografeer alleen het werk, geen mensen.";
+      blok.append(tip);
+
+      return blok;
+    }
+
+    // ===== TAKEN =====
 
     // Maakt het "kaartje" voor één taak
     function maakTaakKaart(taak) {
@@ -244,7 +314,7 @@
         : "○ Open";
       kaart.append(status);
 
-      // NIEUW: toewijzen bij open taken
+      // Toewijzen bij open taken
       if (taak.status === "open") {
         if (ingelogdeGebruiker.magAllesZien) {
           kaart.append(maakToewijsKeuze(taak));              // bestuur/coördinator: keuzelijst
@@ -256,13 +326,9 @@
         }
       }
 
-      // Knop "Gereed melden" bij open taken
+      // Knop "Gereed melden" bij open taken die aan iemand zijn toegewezen
       if (taak.status === "open" && taak.toegewezenAan && magGereedMelden(taak)) {
-        const knop = document.createElement("button");
-        knop.className = "knop-gereed";
-        knop.textContent = "✓ Gereed melden";
-        knop.addEventListener("click", () => meldGereed(taak));
-        kaart.append(knop);
+        kaart.append(maakHoofdKnop("✓ Gereed melden", () => meldGereed(taak)));
       }
 
       // Foto en knoppen bij gereed gemelde taken
@@ -276,9 +342,9 @@
         }
         if (magGereedMelden(taak)) {
           const fotoTekst = taak.foto ? "📷 Foto vervangen" : "📷 Foto toevoegen";
-          kaart.append(maakFotoKnop(taak, fotoTekst));
+          kaart.append(maakFotoKnop(fotoTekst, url => zetTaakFoto(taak, url)));
           if (taak.foto) {
-            kaart.append(maakTweedeKnop("Foto verwijderen", () => verwijderFoto(taak)));
+            kaart.append(maakTweedeKnop("Foto verwijderen", () => zetTaakFoto(taak, "")));
           }
           kaart.append(maakTweedeKnop("↺ Weer openen", () => heropenTaak(taak)));
         }
@@ -287,8 +353,7 @@
       return kaart;
     }
 
-    // NIEUW: keuzelijst "Toegewezen aan" voor bestuur en coördinator.
-    // Je kiest uit: niemand, de leden van de werkgroep van deze taak, of Frion.
+    // Keuzelijst "Toegewezen aan" voor bestuur en coördinator.
     function maakToewijsKeuze(taak) {
       const label = document.createElement("label");
       label.className = "toewijzen";
@@ -306,12 +371,11 @@
       if (taak.toegewezenAan && !opties.includes(taak.toegewezenAan)) {
         opties.push(taak.toegewezenAan);
       }
-
       // Bestuur en coördinator kunnen een taak altijd aan zichzelf toewijzen
       if (!opties.includes(mijnToewijsNaam)) {
         opties.push(mijnToewijsNaam);
       }
-      
+
       opties.forEach(naam => {
         const optie = document.createElement("option");
         optie.value = naam;
@@ -325,7 +389,7 @@
       return label;
     }
 
-    // NIEUW: wijst een taak toe aan een naam ("" = aan niemand)
+    // Wijst een taak toe aan een naam ("" = aan niemand)
     function wijsToe(taak, naam) {
       const vorige = taak.toegewezenAan;   // onthouden voor "Ongedaan maken"
       taak.toegewezenAan = naam;
@@ -337,45 +401,7 @@
       });
     }
 
-    // Maakt de knop "Foto toevoegen" of "Foto vervangen".
-    // Het is een label met een verborgen bestandskiezer erin: tik je op het label,
-    // dan vraagt de telefoon of je een foto wilt maken of kiezen.
-    function maakFotoKnop(taak, knopTekst) {
-      const blok = document.createElement("div");
-
-      const label = document.createElement("label");
-      label.className = "knop-foto";
-      label.textContent = knopTekst;
-
-      const invoer = document.createElement("input");
-      invoer.type = "file";
-      invoer.accept = "image/*";         // alleen foto's
-      invoer.className = "verborgen";
-      invoer.addEventListener("change", () => {
-        const bestand = invoer.files[0];
-        if (!bestand) return;            // niets gekozen: niets doen
-        const vorigeFoto = taak.foto;    // onthouden voor "Ongedaan maken"
-        // Tijdelijk: de foto staat alleen in het geheugen van de telefoon.
-        taak.foto = URL.createObjectURL(bestand);
-        verversScherm();
-        toonMelding(vorigeFoto ? "Foto vervangen" : "Foto toegevoegd", () => {
-          taak.foto = vorigeFoto;
-          verversScherm();
-        });
-      });
-      label.append(invoer);
-      blok.append(label);
-
-      // Privacy-tip, in gewone taal
-      const tip = document.createElement("p");
-      tip.className = "foto-tip";
-      tip.textContent = "Fotografeer alleen het werk, geen mensen.";
-      blok.append(tip);
-
-      return blok;
-    }
-
-    // Zet een taak op gereed en laat de melding met "Ongedaan maken" zien
+    // Zet een taak op gereed
     function meldGereed(taak) {
       taak.status = "gereed";
       taak.gereedGemeldDoor = ingelogdeGebruiker.naam;
@@ -388,18 +414,21 @@
       });
     }
 
-    // Maakt een eenvoudige tweede knop (met rand)
-    function maakTweedeKnop(tekst, actie) {
-      const knop = document.createElement("button");
-      knop.className = "knop-tweede";
-      knop.textContent = tekst;
-      knop.addEventListener("click", actie);
-      return knop;
+    // Foto bij een taak toevoegen, vervangen of verwijderen ("" = verwijderen)
+    function zetTaakFoto(taak, url) {
+      const vorigeFoto = taak.foto;
+      taak.foto = url;
+      verversScherm();
+      let tekst = "Foto verwijderd";
+      if (url) tekst = vorigeFoto ? "Foto vervangen" : "Foto toegevoegd";
+      toonMelding(tekst, () => {
+        taak.foto = vorigeFoto;
+        verversScherm();
+      });
     }
 
     // Zet een gereed gemelde taak weer op open
     function heropenTaak(taak) {
-      // Eerst onthouden hoe het was, zodat "Ongedaan maken" het kan terugzetten
       const vorigeDoor = taak.gereedGemeldDoor;
       const vorigeFoto = taak.foto;
       taak.status = "open";
@@ -414,13 +443,213 @@
       });
     }
 
-    // Haalt de foto weg (bijvoorbeeld als er per ongeluk iemand op staat)
-    function verwijderFoto(taak) {
-      const vorigeFoto = taak.foto;
-      taak.foto = "";
+    // ===== NIEUW: GEBREKEN MELDEN =====
+
+    // Wat er tot nu toe is ingevuld in het meldformulier
+    function leegFormulier() {
+      return { foto: "", plek: "", tekst: "", gevaarlijk: false };
+    }
+    let nieuweMelding = leegFormulier();
+
+    // Het scherm "Melden"
+    function toonMelden() {
+      huidigScherm = "melden";
+      document.getElementById("titel").textContent = "Gebrek melden";
+      const inhoud = document.getElementById("inhoud");
+      inhoud.replaceChildren();
+
+      // 1. Foto
+      const fotoVeld = document.createElement("div");
+      fotoVeld.className = "veld";
+      if (nieuweMelding.foto) {
+        const foto = document.createElement("img");
+        foto.className = "foto";
+        foto.src = nieuweMelding.foto;
+        foto.alt = "Foto van het gebrek";
+        fotoVeld.append(foto);
+      }
+      const fotoTekst = nieuweMelding.foto ? "📷 Andere foto" : "📷 Foto maken";
+      fotoVeld.append(maakFotoKnop(fotoTekst, url => {
+        nieuweMelding.foto = url;
+        verversScherm();
+      }));
+      inhoud.append(fotoVeld);
+
+      // 2. Waar is het? (keuzeknoppen: één tik)
+      inhoud.append(maakKeuzeVeld("Waar is het?", PLEKKEN, nieuweMelding.plek, plek => {
+        nieuweMelding.plek = plek;
+        verversScherm();
+      }));
+
+      // 3. Toelichting (niet verplicht)
+      const tekstVeld = document.createElement("div");
+      tekstVeld.className = "veld";
+      const tekstLabel = document.createElement("label");
+      tekstLabel.className = "veld-titel";
+      tekstLabel.textContent = "Wat is er mis, en waar precies? (niet verplicht)";
+      const tekstInvoer = document.createElement("textarea");
+      tekstInvoer.placeholder = "Bijv. plank los, achter de schuur";
+      tekstInvoer.value = nieuweMelding.tekst;
+      tekstInvoer.addEventListener("input", () => { nieuweMelding.tekst = tekstInvoer.value; });
+      tekstLabel.append(tekstInvoer);
+      tekstVeld.append(tekstLabel);
+      inhoud.append(tekstVeld);
+
+      // 4. Gevaarlijk? (standaard: nee)
+      const gevaarKeuze = nieuweMelding.gevaarlijk ? "Ja, gevaarlijk" : "Nee";
+      inhoud.append(maakKeuzeVeld("Is het gevaarlijk?", ["Nee", "Ja, gevaarlijk"], gevaarKeuze, keuze => {
+        nieuweMelding.gevaarlijk = keuze === "Ja, gevaarlijk";
+        verversScherm();
+      }));
+
+      // Foutmelding (leeg tot er iets mis is)
+      const fout = document.createElement("p");
+      fout.id = "melden-fout";
+      fout.className = "fout";
+      fout.setAttribute("role", "alert");
+      inhoud.append(fout);
+
+      // Hoofdactie
+      inhoud.append(maakHoofdKnop("Melding versturen", verstuurMelding));
+
+      markeerMenu("melden");
+    }
+
+    // Maakt een vraag met keuzeknoppen (zoals "Waar is het?")
+    function maakKeuzeVeld(vraag, keuzes, gekozen, bijKiezen) {
+      const veld = document.createElement("div");
+      veld.className = "veld";
+      const titel = document.createElement("p");
+      titel.className = "veld-titel";
+      titel.textContent = vraag;
+      veld.append(titel);
+
+      const kiezer = document.createElement("div");
+      kiezer.className = "kiezer";
+      keuzes.forEach(keuze => {
+        const knop = document.createElement("button");
+        knop.textContent = keuze;
+        knop.setAttribute("aria-pressed", keuze === gekozen);
+        knop.addEventListener("click", () => bijKiezen(keuze));
+        kiezer.append(knop);
+      });
+      veld.append(kiezer);
+      return veld;
+    }
+
+    // Controleert het formulier en verstuurt de melding
+    function verstuurMelding() {
+      const fout = document.getElementById("melden-fout");
+      if (!nieuweMelding.foto) { fout.textContent = "Maak eerst een foto van het gebrek."; return; }
+      if (!nieuweMelding.plek) { fout.textContent = "Kies waar het is."; return; }
+
+      // "...nieuweMelding" kopieert alles wat is ingevuld; daarna vullen we de rest aan
+      const melding = {
+        ...nieuweMelding,
+        gemeldDoor: ingelogdeGebruiker.naam,
+        datum: vandaag,
+        status: "nieuw"
+      };
+      meldingen.push(melding);
+      nieuweMelding = leegFormulier();   // formulier leegmaken voor de volgende keer
+      toonMeldingen();
+      toonMelding("Melding verstuurd", () => {
+        meldingen.splice(meldingen.indexOf(melding), 1);   // melding weer weghalen
+        verversScherm();
+      });
+    }
+
+    // Het scherm "Meldingen"
+    function toonMeldingen() {
+      huidigScherm = "meldingen";
+      const alles = ingelogdeGebruiker.magAllesZien;
+      document.getElementById("titel").textContent = alles ? "Alle meldingen" : "Mijn meldingen";
+      const inhoud = document.getElementById("inhoud");
+      inhoud.replaceChildren();
+
+      // Vrijwilligers zien alleen hun eigen meldingen
+      const lijst = alles
+        ? [...meldingen]
+        : meldingen.filter(m => m.gemeldDoor === ingelogdeGebruiker.naam);
+
+      if (lijst.length === 0) {
+        const leeg = document.createElement("p");
+        leeg.className = "leeg";
+        leeg.textContent = "Er zijn nog geen meldingen.";
+        inhoud.append(leeg);
+      } else {
+        lijst.sort(sorteerMeldingen);
+        lijst.forEach(m => inhoud.append(maakMeldingKaart(m)));
+      }
+      markeerMenu("meldingen");
+    }
+
+    // Volgorde meldingen: nieuw eerst, daarin gevaarlijk eerst, dan nieuwste bovenaan
+    function sorteerMeldingen(a, b) {
+      if (a.status !== b.status) return a.status === "nieuw" ? -1 : 1;
+      if (a.gevaarlijk !== b.gevaarlijk) return a.gevaarlijk ? -1 : 1;
+      return b.datum.localeCompare(a.datum);
+    }
+
+    // Maakt het "kaartje" voor één melding
+    function maakMeldingKaart(melding) {
+      const kaart = document.createElement("article");
+      kaart.className = "taak";
+
+      if (melding.foto) {
+        const foto = document.createElement("img");
+        foto.className = "foto";
+        foto.src = melding.foto;
+        foto.alt = "Foto van het gebrek bij " + melding.plek;
+        kaart.append(foto);
+      }
+
+      const titel = document.createElement("h2");
+      titel.textContent = melding.plek;
+      kaart.append(titel);
+
+      if (melding.gevaarlijk) {
+        const gevaar = document.createElement("p");
+        gevaar.className = "te-laat";
+        gevaar.textContent = "⚠ Gevaarlijk";
+        kaart.append(gevaar);
+      }
+
+      if (melding.tekst) {
+        const tekst = document.createElement("p");
+        tekst.textContent = melding.tekst;
+        kaart.append(tekst);
+      }
+
+      const details = document.createElement("p");
+      details.className = "details";
+      details.textContent = "Gemeld door " + melding.gemeldDoor + " · " + leesbareDatum(melding.datum);
+      kaart.append(details);
+
+      const status = document.createElement("span");
+      status.className = melding.status === "nieuw" ? "status status-open" : "status status-gereed";
+      status.textContent = melding.status === "nieuw" ? "● Nieuw" : "✓ Afgehandeld";
+      kaart.append(status);
+
+      // Alleen bestuur en coördinator handelen meldingen af
+      if (ingelogdeGebruiker.magAllesZien) {
+        if (melding.status === "nieuw") {
+          kaart.append(maakHoofdKnop("✓ Afgehandeld", () => zetMeldingStatus(melding, "afgehandeld")));
+        } else {
+          kaart.append(maakTweedeKnop("↺ Weer openen", () => zetMeldingStatus(melding, "nieuw")));
+        }
+      }
+      return kaart;
+    }
+
+    // Verandert de status van een melding, met "Ongedaan maken"
+    function zetMeldingStatus(melding, nieuweStatus) {
+      const vorigeStatus = melding.status;
+      melding.status = nieuweStatus;
       verversScherm();
-      toonMelding("Foto verwijderd", () => {
-        taak.foto = vorigeFoto;
+      const tekst = nieuweStatus === "afgehandeld" ? "Melding afgehandeld" : "Melding staat weer open";
+      toonMelding(tekst, () => {
+        melding.status = vorigeStatus;
         verversScherm();
       });
     }
@@ -447,6 +676,31 @@
       verbergMelding();
     });
 
+    // ===== SCHERMEN =====
+
+    let huidigScherm = "mijn";   // onthoudt welk scherm open is
+
+    // NIEUW: opent het scherm dat bij een naam hoort
+    function toonScherm(scherm) {
+      if (scherm === "mijn") toonMijnTaken();
+      else if (scherm === "werkgroep") toonWerkgroep();
+      else if (scherm === "melden") toonMelden();
+      else if (scherm === "meldingen") toonMeldingen();
+    }
+
+    // Tekent het huidige scherm opnieuw (na een wijziging)
+    function verversScherm() {
+      toonScherm(huidigScherm);
+    }
+
+    // NIEUW: laat in het menu zien welk scherm open is (werkt voor elk aantal knoppen)
+    function markeerMenu(scherm) {
+      document.querySelectorAll("nav button").forEach(knop => {
+        if (knop.dataset.scherm === scherm) knop.setAttribute("aria-current", "page");
+        else knop.removeAttribute("aria-current");
+      });
+    }
+
     // Zet een lijst taken op het scherm
     function toonLijst(lijst) {
       const inhoud = document.getElementById("inhoud");
@@ -461,35 +715,11 @@
       lijst.forEach(taak => inhoud.append(maakTaakKaart(taak)));
     }
 
-    // Laat in het menu zien welk scherm open is
-    function markeerMenu(scherm) {
-      const knopMijn = document.getElementById("knop-mijn");
-      const knopWerkgroep = document.getElementById("knop-werkgroep");
-      if (scherm === "mijn") {
-        knopMijn.setAttribute("aria-current", "page");
-        knopWerkgroep.removeAttribute("aria-current");
-      } else {
-        knopWerkgroep.setAttribute("aria-current", "page");
-        knopMijn.removeAttribute("aria-current");
-      }
-    }
-
-    // ===== SCHERMEN =====
-
-    let huidigScherm = "mijn";   // onthoudt welk scherm open is
-
-    // Tekent het huidige scherm opnieuw (na een wijziging)
-    function verversScherm() {
-      if (huidigScherm === "mijn") toonMijnTaken();
-      else toonWerkgroep();
-    }
-
     function toonMijnTaken() {
       huidigScherm = "mijn";
       document.getElementById("titel").textContent = "Mijn taken";
       document.getElementById("inhoud").replaceChildren(); // scherm leegmaken
-      const mijnTaken = taken.filter(isMijnTaak);          // NIEUW: telt ook Frion-taken mee
-      toonLijst(mijnTaken);
+      toonLijst(taken.filter(isMijnTaak));
       markeerMenu("mijn");
     }
 
@@ -532,8 +762,10 @@
     }
 
     // ===== START =====
-    document.getElementById("knop-mijn").addEventListener("click", toonMijnTaken);
-    document.getElementById("knop-werkgroep").addEventListener("click", toonWerkgroep);
+    // Elke menuknop opent het scherm dat in zijn "data-scherm" staat
+    document.querySelectorAll("nav button").forEach(knop => {
+      knop.addEventListener("click", () => toonScherm(knop.dataset.scherm));
+    });
     toonMijnTaken();
   </script>
 </body>
