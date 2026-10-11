@@ -252,7 +252,7 @@
       }
 
       // Knop "Gereed melden" bij open taken
-      if (taak.status === "open" && magGereedMelden(taak)) {
+      if (taak.status === "open" && taak.toegewezenAan && magGereedMelden(taak)) {
         const knop = document.createElement("button");
         knop.className = "knop-gereed";
         knop.textContent = "✓ Gereed melden";
