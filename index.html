@@ -63,7 +63,15 @@
     }
     .foto-tip { font-size: 16px; color: var(--grijs); }
     .foto { display: block; width: 100%; margin-top: 12px; border-radius: 8px; }
-
+    
+    /* Tweede knoppen ("Weer openen", "Foto verwijderen"): alleen een grijze rand */
+    .knop-tweede {
+      display: block; width: 100%; min-height: 48px; margin-top: 12px;
+      font-size: 16px; font-weight: bold;
+      border: 2px solid var(--grijs); border-radius: 8px;
+      background: #ffffff; color: var(--tekst);
+    }
+    
     /* NIEUW: maakt iets onzichtbaar maar laat het wel werken (voor de foto-invoer) */
     .verborgen { position: absolute; width: 1px; height: 1px; opacity: 0; }
 
@@ -202,7 +210,7 @@
         kaart.append(knop);
       }
 
-      // NIEUW: foto bij gereed gemelde taken
+      // Foto en knoppen bij gereed gemelde taken
       if (taak.status === "gereed") {
         if (taak.foto) {
           const foto = document.createElement("img");
@@ -210,23 +218,29 @@
           foto.src = taak.foto;
           foto.alt = "Foto bij de taak: " + taak.titel;
           kaart.append(foto);
-        } else if (magGereedMelden(taak)) {
-          kaart.append(maakFotoKnop(taak));
+        }
+        if (magGereedMelden(taak)) {
+          const fotoTekst = taak.foto ? "📷 Foto vervangen" : "📷 Foto toevoegen";
+          kaart.append(maakFotoKnop(taak, fotoTekst));
+          if (taak.foto) {
+            kaart.append(maakTweedeKnop("Foto verwijderen", () => verwijderFoto(taak)));
+          }
+          kaart.append(maakTweedeKnop("↺ Weer openen", () => heropenTaak(taak)));
         }
       }
 
       return kaart;
     }
 
-    // NIEUW: maakt de knop "Foto toevoegen".
+    // Maakt de knop "Foto toevoegen" of "Foto vervangen".
     // Het is een label met een verborgen bestandskiezer erin: tik je op het label,
     // dan vraagt de telefoon of je een foto wilt maken of kiezen.
-    function maakFotoKnop(taak) {
+    function maakFotoKnop(taak, knopTekst) {
       const blok = document.createElement("div");
 
       const label = document.createElement("label");
       label.className = "knop-foto";
-      label.textContent = "📷 Foto toevoegen";
+      label.textContent = knopTekst;
 
       const invoer = document.createElement("input");
       invoer.type = "file";
@@ -235,12 +249,12 @@
       invoer.addEventListener("change", () => {
         const bestand = invoer.files[0];
         if (!bestand) return;            // niets gekozen: niets doen
+        const vorigeFoto = taak.foto;    // onthouden voor "Ongedaan maken"
         // Tijdelijk: de foto staat alleen in het geheugen van de telefoon.
-        // Later uploaden we hem naar de database.
         taak.foto = URL.createObjectURL(bestand);
         verversScherm();
-        toonMelding("Foto toegevoegd", () => {
-          taak.foto = "";
+        toonMelding(vorigeFoto ? "Foto vervangen" : "Foto toegevoegd", () => {
+          taak.foto = vorigeFoto;
           verversScherm();
         });
       });
@@ -250,7 +264,7 @@
       // Privacy-tip, in gewone taal
       const tip = document.createElement("p");
       tip.className = "foto-tip";
-      tip.textContent = "Fotografeer het werk, geen mensen ivm AVG.";
+      tip.textContent = "Fotografeer alleen het werk, geen mensen.";
       blok.append(tip);
 
       return blok;
@@ -270,6 +284,43 @@
       });
     }
 
+    // Maakt een eenvoudige tweede knop (met rand)
+    function maakTweedeKnop(tekst, actie) {
+      const knop = document.createElement("button");
+      knop.className = "knop-tweede";
+      knop.textContent = tekst;
+      knop.addEventListener("click", actie);
+      return knop;
+    }
+
+    // Zet een gereed gemelde taak weer op open
+    function heropenTaak(taak) {
+      // Eerst onthouden hoe het was, zodat "Ongedaan maken" het kan terugzetten
+      const vorigeDoor = taak.gereedGemeldDoor;
+      const vorigeFoto = taak.foto;
+      taak.status = "open";
+      taak.gereedGemeldDoor = "";
+      taak.foto = "";
+      verversScherm();
+      toonMelding("Taak staat weer open", () => {
+        taak.status = "gereed";
+        taak.gereedGemeldDoor = vorigeDoor;
+        taak.foto = vorigeFoto;
+        verversScherm();
+      });
+    }
+
+    // Haalt de foto weg (bijvoorbeeld als er per ongeluk iemand op staat)
+    function verwijderFoto(taak) {
+      const vorigeFoto = taak.foto;
+      taak.foto = "";
+      verversScherm();
+      toonMelding("Foto verwijderd", () => {
+        taak.foto = vorigeFoto;
+        verversScherm();
+      });
+    }
+    
     // ===== NIEUW: MELDING ONDERAAN =====
     let meldingTimer = null;      // de "wekker" die de melding weer verbergt
     let ongedaanActie = null;     // wat er gebeurt bij "Ongedaan maken"
