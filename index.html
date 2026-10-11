@@ -304,6 +304,11 @@
         opties.push(taak.toegewezenAan);
       }
 
+      // Bestuur en coördinator kunnen een taak altijd aan zichzelf toewijzen
+      if (!opties.includes(mijnToewijsNaam)) {
+        opties.push(mijnToewijsNaam);
+      }
+      
       opties.forEach(naam => {
         const optie = document.createElement("option");
         optie.value = naam;
