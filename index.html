@@ -144,7 +144,7 @@
 
     // Wie is er "ingelogd"? (nep, om te testen)
     const ingelogdeGebruiker = {
-      naam: "Anna",
+      naam: "Kirsten",
       werkgroepen: ["Dieren", "Klussen"],
       magAllesZien: false,  // true = bestuur of coördinator onderhoud
       isFrion: false        // true = Frion-begeleider
@@ -154,7 +154,7 @@
 
     // Alle vrijwilligers en hun werkgroepen. Nodig voor de keuzelijst bij toewijzen.
     const vrijwilligers = [
-      { naam: "Anna",   werkgroepen: ["Dieren", "Klussen"] },
+      { naam: "Kirsten",   werkgroepen: ["Dieren", "Klussen"] },
       { naam: "Piet",   werkgroepen: ["Dieren"] },
       { naam: "Fatima", werkgroepen: ["Tuinen"] },
       { naam: "Kees",   werkgroepen: ["Evenementen", "Klussen"] },
@@ -165,9 +165,9 @@
     const FRION = "Frion";
 
     const taken = [
-      { titel: "Hek weide 2 repareren", omschrijving: "Onderste plank zit los bij de ingang.", werkgroep: "Klussen", toegewezenAan: "Anna", deadline: "2026-10-08", status: "open" },
-      { titel: "Hooi bestellen", omschrijving: "Voorraad op de hooizolder is bijna op.", werkgroep: "Dieren", toegewezenAan: "Anna", deadline: "2026-10-14", status: "open" },
-      { titel: "Waterpomp winterklaar maken", omschrijving: "Pomp bij het waterspelen aftappen.", werkgroep: "Klussen", toegewezenAan: "Anna", deadline: "2026-10-03", status: "gereed", gereedGemeldDoor: "Anna" },
+      { titel: "Hek weide 2 repareren", omschrijving: "Onderste plank zit los bij de ingang.", werkgroep: "Klussen", toegewezenAan: "Kirsten", deadline: "2026-10-08", status: "open" },
+      { titel: "Hooi bestellen", omschrijving: "Voorraad op de hooizolder is bijna op.", werkgroep: "Dieren", toegewezenAan: "Kirsten", deadline: "2026-10-14", status: "open" },
+      { titel: "Waterpomp winterklaar maken", omschrijving: "Pomp bij het waterspelen aftappen.", werkgroep: "Klussen", toegewezenAan: "Kirsten", deadline: "2026-10-03", status: "gereed", gereedGemeldDoor: "Kirsten" },
       { titel: "Konijnenhok extra uitmesten", omschrijving: "Na de herfstvakantie.", werkgroep: "Dieren", toegewezenAan: "Piet", deadline: "2026-10-27", status: "open" },
       { titel: "Lampen schuur vervangen", omschrijving: "Twee tl-buizen zijn kapot.", werkgroep: "Klussen", toegewezenAan: "", deadline: "2026-10-20", status: "open" },
       { titel: "Drinkbak ezels schoonmaken", omschrijving: "Algen verwijderen en vers water.", werkgroep: "Dieren", toegewezenAan: "", deadline: "2026-10-16", status: "open" },
@@ -183,7 +183,7 @@
 
     // NIEUW: voorbeeldmeldingen. status is "nieuw" of "afgehandeld".
     const meldingen = [
-      { plek: "Speelkasteel", tekst: "Splinter in de leuning van de trap.", gevaarlijk: true, gemeldDoor: "Anna", datum: "2026-10-09", status: "nieuw", foto: "" },
+      { plek: "Speelkasteel", tekst: "Splinter in de leuning van de trap.", gevaarlijk: true, gemeldDoor: "Kirsten", datum: "2026-10-09", status: "nieuw", foto: "" },
       { plek: "Weides", tekst: "Hek weide 3 gaat niet meer dicht.", gevaarlijk: false, gemeldDoor: "Piet", datum: "2026-10-05", status: "afgehandeld", foto: "" }
     ];
 
