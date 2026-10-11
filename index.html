@@ -24,7 +24,7 @@
     }
     header { background: var(--groen); color: #ffffff; padding: 16px; position: sticky; top: 0; }
     h1 { margin: 0; font-size: 22px; }
-    main { padding: 16px; padding-bottom: 100px; } /* ruimte vrij voor het menu onderaan */
+    main { padding: 16px; padding-bottom: 180px; } /* ruimte vrij voor menu én melding onderaan */
 
     /* Knoppen om een werkgroep te kiezen */
     .kiezer { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
@@ -46,6 +46,40 @@
     .status-gereed { background: #e3f1e4; color: #1e4d24; }
     .leeg { color: var(--grijs); }
 
+    /* NIEUW: knop "Gereed melden" (de hoofdactie, daarom groot en gevuld) */
+    .knop-gereed {
+      display: block; width: 100%; min-height: 56px; margin-top: 12px;
+      font-size: 18px; font-weight: bold;
+      background: var(--groen); color: #ffffff; border: none; border-radius: 8px;
+    }
+
+    /* NIEUW: knop "Foto toevoegen" (tweede actie, daarom alleen een rand) */
+    .knop-foto {
+      display: flex; align-items: center; justify-content: center;
+      width: 100%; min-height: 48px; margin-top: 12px;
+      font-size: 16px; font-weight: bold;
+      border: 2px solid var(--groen); border-radius: 8px;
+      background: #ffffff; color: var(--groen);
+    }
+    .foto-tip { font-size: 16px; color: var(--grijs); }
+    .foto { display: block; width: 100%; margin-top: 12px; border-radius: 8px; }
+
+    /* NIEUW: maakt iets onzichtbaar maar laat het wel werken (voor de foto-invoer) */
+    .verborgen { position: absolute; width: 1px; height: 1px; opacity: 0; }
+
+    /* NIEUW: melding onderaan met "Ongedaan maken" */
+    .melding {
+      position: fixed; left: 16px; right: 16px;
+      bottom: calc(76px + env(safe-area-inset-bottom));
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      background: #1a1a1a; color: #ffffff; border-radius: 8px; padding: 12px 16px;
+    }
+    .melding[hidden] { display: none; }
+    .melding button {
+      min-height: 48px; padding: 0 16px; font-size: 16px; font-weight: bold;
+      background: #ffffff; color: #1a1a1a; border: none; border-radius: 6px;
+    }
+
     /* Menu onderaan: binnen bereik van je duim */
     nav {
       position: fixed; bottom: 0; left: 0; right: 0;
@@ -62,6 +96,12 @@
   <!-- Hier zet het script de taken neer -->
   <main id="inhoud"></main>
 
+  <!-- NIEUW: melding die even verschijnt na "Gereed melden" -->
+  <div id="melding" class="melding" role="status" aria-live="polite" hidden>
+    <span id="melding-tekst"></span>
+    <button id="knop-ongedaan">Ongedaan maken</button>
+  </div>
+
   <nav>
     <button id="knop-mijn">Mijn taken</button>
     <button id="knop-werkgroep">Werkgroep</button>
@@ -76,7 +116,7 @@
     const ingelogdeGebruiker = {
       naam: "Anna",
       werkgroepen: ["Dieren", "Klussen"],
-      magAllesZien: true   // true = bestuur of coördinator onderhoud
+      magAllesZien: false   // true = bestuur of coördinator onderhoud
     };
 
     const alleWerkgroepen = ["Dieren", "Tuinen", "Klussen", "Educatie", "Evenementen", "Geschiedenis"];
@@ -84,17 +124,19 @@
     const taken = [
       { titel: "Hek weide 2 repareren", omschrijving: "Onderste plank zit los bij de ingang.", werkgroep: "Klussen", toegewezenAan: "Anna", deadline: "2026-10-08", status: "open" },
       { titel: "Hooi bestellen", omschrijving: "Voorraad op de hooizolder is bijna op.", werkgroep: "Dieren", toegewezenAan: "Anna", deadline: "2026-10-14", status: "open" },
-      { titel: "Waterpomp winterklaar maken", omschrijving: "Pomp bij het waterspelen aftappen.", werkgroep: "Klussen", toegewezenAan: "Anna", deadline: "2026-10-03", status: "gereed" },
+      { titel: "Waterpomp winterklaar maken", omschrijving: "Pomp bij het waterspelen aftappen.", werkgroep: "Klussen", toegewezenAan: "Anna", deadline: "2026-10-03", status: "gereed", gereedGemeldDoor: "Anna" },
       { titel: "Konijnenhok extra uitmesten", omschrijving: "Na de herfstvakantie.", werkgroep: "Dieren", toegewezenAan: "Piet", deadline: "2026-10-27", status: "open" },
       { titel: "Lampen schuur vervangen", omschrijving: "Twee tl-buizen zijn kapot.", werkgroep: "Klussen", toegewezenAan: "", deadline: "2026-10-20", status: "open" },
       { titel: "Bollen planten belevenistuin", omschrijving: "Bollen liggen in de kas.", werkgroep: "Tuinen", toegewezenAan: "Fatima", deadline: "2026-10-25", status: "open" },
-      { titel: "Lampionnen voorbereiden", omschrijving: "Materiaal klaarzetten voor de workshop.", werkgroep: "Evenementen", toegewezenAan: "Kees", deadline: "2026-11-05", status: "open" },
-      { titel: "Wilgenburcht snoeien", omschrijving: "Tunnel 1 snoeien.", werkgroep: "Tuinen", toegewezenAan: "Harry", deadline: "2027-03-31", status: "open" }
+      { titel: "Lampionnen voorbereiden", omschrijving: "Materiaal klaarzetten voor de workshop.", werkgroep: "Evenementen", toegewezenAan: "Kees", deadline: "2026-11-05", status: "open" }
     ];
+
+    // NIEUW: hoe lang de melding "Ongedaan maken" zichtbaar blijft (in milliseconden: 6000 = 6 seconden)
+    const MELDING_DUUR = 6000;
 
     // ===== HULPFUNCTIES =====
 
-    // De datum van vandaag, in dezelfde vorm als de deadlines ("2026-10-10")
+    // De datum van vandaag, in dezelfde vorm als de deadlines ("2026-10-11")
     const vandaag = new Date().toISOString().slice(0, 10);
 
     // Zet "2026-10-14" om in "di 14 okt"
@@ -106,6 +148,15 @@
     function sorteerTaken(a, b) {
       if (a.status !== b.status) return a.status === "open" ? -1 : 1;
       return a.deadline.localeCompare(b.deadline);
+    }
+
+    // NIEUW: mag de ingelogde gebruiker deze taak gereed melden?
+    // Ja als: je alles mag zien (bestuur/coördinator), de taak in jouw werkgroep valt,
+    // of de taak aan jou is toegewezen.
+    function magGereedMelden(taak) {
+      return ingelogdeGebruiker.magAllesZien
+        || ingelogdeGebruiker.werkgroepen.includes(taak.werkgroep)
+        || taak.toegewezenAan === ingelogdeGebruiker.naam;
     }
 
     // Maakt het "kaartje" voor één taak
@@ -137,11 +188,109 @@
 
       const status = document.createElement("span");
       status.className = "status status-" + taak.status;
-      status.textContent = taak.status === "gereed" ? "✓ Gereed" : "○ Open";
+      status.textContent = taak.status === "gereed"
+        ? "✓ Gereed gemeld door " + taak.gereedGemeldDoor   // NIEUW: wie het deed
+        : "○ Open";
       kaart.append(status);
+
+      // NIEUW: knop "Gereed melden" bij open taken
+      if (taak.status === "open" && magGereedMelden(taak)) {
+        const knop = document.createElement("button");
+        knop.className = "knop-gereed";
+        knop.textContent = "✓ Gereed melden";
+        knop.addEventListener("click", () => meldGereed(taak));
+        kaart.append(knop);
+      }
+
+      // NIEUW: foto bij gereed gemelde taken
+      if (taak.status === "gereed") {
+        if (taak.foto) {
+          const foto = document.createElement("img");
+          foto.className = "foto";
+          foto.src = taak.foto;
+          foto.alt = "Foto bij de taak: " + taak.titel;
+          kaart.append(foto);
+        } else if (magGereedMelden(taak)) {
+          kaart.append(maakFotoKnop(taak));
+        }
+      }
 
       return kaart;
     }
+
+    // NIEUW: maakt de knop "Foto toevoegen".
+    // Het is een label met een verborgen bestandskiezer erin: tik je op het label,
+    // dan vraagt de telefoon of je een foto wilt maken of kiezen.
+    function maakFotoKnop(taak) {
+      const blok = document.createElement("div");
+
+      const label = document.createElement("label");
+      label.className = "knop-foto";
+      label.textContent = "📷 Foto toevoegen";
+
+      const invoer = document.createElement("input");
+      invoer.type = "file";
+      invoer.accept = "image/*";         // alleen foto's
+      invoer.className = "verborgen";
+      invoer.addEventListener("change", () => {
+        const bestand = invoer.files[0];
+        if (!bestand) return;            // niets gekozen: niets doen
+        // Tijdelijk: de foto staat alleen in het geheugen van de telefoon.
+        // Later uploaden we hem naar de database.
+        taak.foto = URL.createObjectURL(bestand);
+        verversScherm();
+        toonMelding("Foto toegevoegd", () => {
+          taak.foto = "";
+          verversScherm();
+        });
+      });
+      label.append(invoer);
+      blok.append(label);
+
+      // Privacy-tip, in gewone taal
+      const tip = document.createElement("p");
+      tip.className = "foto-tip";
+      tip.textContent = "Fotografeer alleen het werk, geen mensen.";
+      blok.append(tip);
+
+      return blok;
+    }
+
+    // NIEUW: zet een taak op gereed en laat de melding met "Ongedaan maken" zien
+    function meldGereed(taak) {
+      taak.status = "gereed";
+      taak.gereedGemeldDoor = ingelogdeGebruiker.naam;
+      verversScherm();
+      toonMelding("Taak gereed gemeld", () => {
+        // Dit gebeurt als je op "Ongedaan maken" tikt
+        taak.status = "open";
+        taak.gereedGemeldDoor = "";
+        taak.foto = "";
+        verversScherm();
+      });
+    }
+
+    // ===== NIEUW: MELDING ONDERAAN =====
+    let meldingTimer = null;      // de "wekker" die de melding weer verbergt
+    let ongedaanActie = null;     // wat er gebeurt bij "Ongedaan maken"
+
+    function toonMelding(tekst, actieBijOngedaan) {
+      document.getElementById("melding-tekst").textContent = tekst;
+      ongedaanActie = actieBijOngedaan;
+      document.getElementById("melding").hidden = false;
+      clearTimeout(meldingTimer);                            // oude wekker uitzetten
+      meldingTimer = setTimeout(verbergMelding, MELDING_DUUR); // nieuwe wekker zetten
+    }
+
+    function verbergMelding() {
+      document.getElementById("melding").hidden = true;
+      ongedaanActie = null;
+    }
+
+    document.getElementById("knop-ongedaan").addEventListener("click", () => {
+      if (ongedaanActie) ongedaanActie();
+      verbergMelding();
+    });
 
     // Zet een lijst taken op het scherm
     function toonLijst(lijst) {
@@ -172,7 +321,16 @@
 
     // ===== SCHERMEN =====
 
+    let huidigScherm = "mijn";   // NIEUW: onthoudt welk scherm open is
+
+    // NIEUW: tekent het huidige scherm opnieuw (na een wijziging)
+    function verversScherm() {
+      if (huidigScherm === "mijn") toonMijnTaken();
+      else toonWerkgroep();
+    }
+
     function toonMijnTaken() {
+      huidigScherm = "mijn";
       document.getElementById("titel").textContent = "Mijn taken";
       document.getElementById("inhoud").replaceChildren(); // scherm leegmaken
       const mijnTaken = taken.filter(taak => taak.toegewezenAan === ingelogdeGebruiker.naam);
@@ -183,6 +341,7 @@
     let gekozenWerkgroep = ingelogdeGebruiker.werkgroepen[0];
 
     function toonWerkgroep() {
+      huidigScherm = "werkgroep";
       document.getElementById("titel").textContent = "Taken werkgroep";
       const inhoud = document.getElementById("inhoud");
       inhoud.replaceChildren();
