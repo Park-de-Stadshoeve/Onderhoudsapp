@@ -208,8 +208,7 @@
     const meldingen = [
       { plek: "Speelkasteel", tekst: "Splinter in de leuning van de trap.", gevaarlijk: true, gemeldDoor: "Kirsten", datum: "2026-10-09", foto: "", taakId: null, geenActie: false },
       { plek: "Weides", tekst: "Hek weide 3 gaat niet meer dicht.", gevaarlijk: false, gemeldDoor: "Piet", datum: "2026-10-05", foto: "", taakId: 11, geenActie: false },
-      { plek: "Gebouw", tekst: "Lamp bij de ingang flikkert.", gevaarlijk: false, gemeldDoor: "Kirsten", datum: "2026-10-02", foto: "", taakId: null, geenActie: true }
-    ];
+      { plek: "Gebouw", tekst: "Lamp bij de ingang flikkert.", gevaarlijk: false, gemeldDoor: "Kirsten", datum: "2026-10-02", foto: "", taakId: null, geenActie: true, geenActieReden: "Lamp is al vervangen door de bistro.", geenActieDoor: "Jan" }    ];
 
     // Hoe lang de melding "Ongedaan maken" zichtbaar blijft (in milliseconden: 6000 = 6 seconden)
     const MELDING_DUUR = 6000;
@@ -704,6 +703,10 @@
       return b.datum.localeCompare(a.datum);
     }
 
+    // NIEUW: welke melding toont nu het vak "Waarom geen actie?" (null = geen)
+    let meldingMetRedenOpen = null;
+    let redenTekst = "";
+
     // Maakt het "kaartje" voor één melding
     function maakMeldingKaart(melding) {
       const kaart = document.createElement("article");
@@ -754,29 +757,76 @@
       statusLabel.textContent = STATUS_TEKST[status];
       kaart.append(statusLabel);
 
+      // NIEUW: de toelichting bij "Geen actie nodig" (ziet de melder ook)
+      if (melding.geenActie && melding.geenActieReden) {
+        const reden = document.createElement("p");
+        reden.textContent = "Toelichting van " + melding.geenActieDoor + ": " + melding.geenActieReden;
+        kaart.append(reden);
+      }
+
       // Knoppen voor bestuur en coördinator
       if (ingelogdeGebruiker.magAllesZien) {
-        if (status === "Nieuw") {
+        if (status === "Nieuw" && meldingMetRedenOpen === melding) {
+          // NIEUW: vak om uit te leggen waarom er geen actie nodig is
+          kaart.append(maakInvoerVeld("Waarom is er geen actie nodig? De melder ziet dit.", "lang",
+            redenTekst, waarde => { redenTekst = waarde; }));
+          const fout = document.createElement("p");
+          fout.id = "reden-fout";
+          fout.className = "fout";
+          fout.setAttribute("role", "alert");
+          kaart.append(fout);
+          kaart.append(maakHoofdKnop("Opslaan", () => slaGeenActieOp(melding)));
+          kaart.append(maakTweedeKnop("Annuleren", () => {
+            meldingMetRedenOpen = null;
+            redenTekst = "";
+            verversScherm();
+          }));
+        } else if (status === "Nieuw") {
           kaart.append(maakHoofdKnop("📋 Maak taak", () => openTaakUitMelding(melding)));
-          kaart.append(maakTweedeKnop("Geen actie nodig", () => zetGeenActie(melding, true)));
+          // NIEUW: opent eerst het vak voor de toelichting
+          kaart.append(maakTweedeKnop("Geen actie nodig", () => {
+            meldingMetRedenOpen = melding;
+            redenTekst = "";
+            verversScherm();
+          }));
         } else if (status === "Geen actie nodig") {
-          kaart.append(maakTweedeKnop("↺ Weer openen", () => zetGeenActie(melding, false)));
+          kaart.append(maakTweedeKnop("↺ Weer openen", () => zetGeenActie(melding, false, "")));
         }
         // Is er een taak? Dan regel je de rest bij de taak zelf (onder "Werkgroep").
       }
       return kaart;
     }
 
-    // Zet een melding op "Geen actie nodig" (true) of weer open (false)
-    function zetGeenActie(melding, waarde) {
+    // NIEUW: controleert of er een toelichting is, en slaat "Geen actie nodig" op
+    function slaGeenActieOp(melding) {
+      if (!redenTekst.trim()) {
+        document.getElementById("reden-fout").textContent = "Schrijf kort op waarom er geen actie nodig is.";
+        return;
+      }
+      zetGeenActie(melding, true, redenTekst.trim());
+    }
+
+    // Zet een melding op "Geen actie nodig" (true, met toelichting) of weer open (false)
+    function zetGeenActie(melding, waarde, reden) {
+      // Onthouden hoe het was, voor "Ongedaan maken"
+      const vorig = {
+        geenActie: melding.geenActie,
+        reden: melding.geenActieReden,
+        door: melding.geenActieDoor
+      };
       melding.geenActie = waarde;
+      melding.geenActieReden = waarde ? reden : "";
+      melding.geenActieDoor = waarde ? ingelogdeGebruiker.naam : "";
+      meldingMetRedenOpen = null;
+      redenTekst = "";
       verversScherm();
       toonMelding(waarde ? "Geen actie nodig" : "Melding staat weer open", () => {
-        melding.geenActie = !waarde;
+        melding.geenActie = vorig.geenActie;
+        melding.geenActieReden = vorig.reden;
+        melding.geenActieDoor = vorig.door;
         verversScherm();
       });
     }
-
     // ===== NIEUW: TAAKFORMULIER (aanmaken, uit melding, wijzigen) =====
     // Eén formulier voor drie situaties. "modus" zegt welke:
     //   "nieuw"    = nieuwe taak, bijvoorbeeld uit de jaarplanning
