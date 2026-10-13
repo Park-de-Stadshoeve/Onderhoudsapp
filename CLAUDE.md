@@ -124,7 +124,9 @@ Ik bouw deze app zelf om te leren hoe je een app maakt. Claude schrijft code, ma
 Werk deze sectie bij aan het eind van elke stap.
 
 Klaar (als werkend ontwerp met voorbeeldgegevens, nog zonder database):
-- Alle vijf de functies, in één bestand index.html.
+- Alle vijf de functies, verdeeld over drie bestanden: index.html (geraamte),
+  stijl.css (uiterlijk) en app.js (logica en voorbeeldgegevens).
+- Demo: "?rol=bestuur" achter de link maakt Kirsten bestuurslid.
 - Menu onderaan: Mijn taken, Werkgroep, Melden, Meldingen.
 - Elke actie heeft "Ongedaan maken" (6 seconden).
 - De status van een melding wordt afgeleid van de gekoppelde taak (taakId), niet
@@ -136,7 +138,7 @@ Klaar (als werkend ontwerp met voorbeeldgegevens, nog zonder database):
 
 Volgende stappen:
 0. Demo-trucje "?rol=bestuur" verwijderen uit app.js zodra echt inloggen werkt.
-1. index.html opsplitsen in index.html, stijl.css en app.js.
+1. Feedback van het bestuur verwerken.
 2. Database en inloggen koppelen. Daarbij:
    - één tabel gebruikers met per persoon een rol en werkgroepen;
    - rechten afdwingen in de database;

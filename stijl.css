@@ -1,0 +1,116 @@
+/* Stijl van de Vrijwilligersapp: kleuren, groottes en plaats van alles op het scherm.
+   Dit bestand wordt geladen door index.html. */
+
+/* ===== KLEUREN: hier op één plek, zodat je ze makkelijk kunt aanpassen ===== */
+:root {
+  --groen: #2e5d34;
+  --tekst: #1a1a1a;
+  --grijs: #555555;
+  --rand: #cccccc;
+  --achtergrond: #f4f4f2;
+  --rood: #a4161a;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  font-size: 18px;
+  color: var(--tekst);
+  background: var(--achtergrond);
+}
+header { background: var(--groen); color: #ffffff; padding: 16px; position: sticky; top: 0; z-index: 1; }
+h1 { margin: 0; font-size: 22px; }
+main { padding: 16px; padding-bottom: 180px; } /* ruimte vrij voor menu én melding onderaan */
+
+/* Keuzeknoppen (werkgroepen, plekken, gevaarlijk ja/nee) */
+.kiezer { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.kiezer button {
+  min-height: 48px; padding: 0 16px; font-size: 16px;
+  border: 2px solid var(--groen); border-radius: 24px;
+  background: #ffffff; color: var(--groen);
+}
+.kiezer button[aria-pressed="true"] { background: var(--groen); color: #ffffff; font-weight: bold; }
+
+/* Eén taak of melding */
+.taak { background: #ffffff; border: 1px solid var(--rand); border-radius: 8px; padding: 16px; margin-bottom: 12px; }
+.taak h2 { margin: 0 0 4px; font-size: 19px; }
+.taak p { margin: 4px 0; }
+.details { color: var(--grijs); font-size: 16px; }
+.te-laat { color: var(--rood); font-weight: bold; }
+.status { display: inline-block; margin-top: 8px; padding: 4px 10px; border-radius: 4px; font-size: 16px; font-weight: bold; }
+.status-open { background: #e8eef9; color: #1d3d7a; }
+.status-gereed { background: #e3f1e4; color: #1e4d24; }
+.leeg { color: var(--grijs); }
+
+/* Hoofdknop (groot en gevuld) */
+.knop-gereed {
+  display: block; width: 100%; min-height: 56px; margin-top: 12px;
+  font-size: 18px; font-weight: bold;
+  background: var(--groen); color: #ffffff; border: none; border-radius: 8px;
+}
+
+/* Knop "Foto" (rand in groen) */
+.knop-foto {
+  display: flex; align-items: center; justify-content: center;
+  width: 100%; min-height: 48px; margin-top: 12px;
+  font-size: 16px; font-weight: bold;
+  border: 2px solid var(--groen); border-radius: 8px;
+  background: #ffffff; color: var(--groen);
+}
+.foto-tip { font-size: 16px; color: var(--grijs); }
+.foto { display: block; width: 100%; margin-top: 4px; border-radius: 8px; }
+.foto-label { margin-top: 12px; }
+
+/* Tweede knoppen: alleen een grijze rand */
+.knop-tweede {
+  display: block; width: 100%; min-height: 48px; margin-top: 12px;
+  font-size: 16px; font-weight: bold;
+  border: 2px solid var(--grijs); border-radius: 8px;
+  background: #ffffff; color: var(--tekst);
+}
+
+/* Keuzelijst (bijv. "Toegewezen aan") */
+.toewijzen { display: block; margin-top: 12px; font-size: 16px; font-weight: bold; }
+.toewijzen select {
+  display: block; width: 100%; min-height: 48px; margin-top: 4px; padding: 0 12px;
+  font-size: 18px;  /* 16px of meer: anders zoomt de iPhone in bij aantikken */
+  border: 2px solid var(--grijs); border-radius: 8px;
+  background: #ffffff; color: var(--tekst);
+}
+
+/* Formulieren */
+.veld { margin-bottom: 24px; }
+.veld-titel { display: block; margin: 0 0 8px; font-weight: bold; }
+textarea, input[type="text"], input[type="date"] {
+  display: block; width: 100%; min-height: 48px; margin-top: 8px; padding: 12px;
+  font-family: inherit; font-size: 18px; font-weight: normal;
+  border: 2px solid var(--grijs); border-radius: 8px;
+  background: #ffffff; color: var(--tekst);
+}
+textarea { min-height: 96px; }
+.fout { color: var(--rood); font-weight: bold; }
+
+/* Maakt iets onzichtbaar maar laat het wel werken (voor de foto-invoer) */
+.verborgen { position: absolute; width: 1px; height: 1px; opacity: 0; }
+
+/* Melding onderaan met "Ongedaan maken" */
+.melding {
+  position: fixed; left: 16px; right: 16px;
+  bottom: calc(76px + env(safe-area-inset-bottom));
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  background: #1a1a1a; color: #ffffff; border-radius: 8px; padding: 12px 16px;
+}
+.melding[hidden] { display: none; }
+.melding button {
+  min-height: 48px; padding: 0 16px; font-size: 16px; font-weight: bold;
+  background: #ffffff; color: #1a1a1a; border: none; border-radius: 6px;
+}
+
+/* Menu onderaan: binnen bereik van je duim */
+nav {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  display: flex; background: #ffffff; border-top: 1px solid var(--rand);
+  padding-bottom: env(safe-area-inset-bottom); /* ruimte voor de streep onderaan op iPhones */
+}
+nav button { flex: 1; min-height: 64px; padding: 0 4px; font-size: 16px; border: none; background: none; color: var(--grijs); }
+nav button[aria-current="page"] { color: var(--groen); font-weight: bold; border-top: 4px solid var(--groen); }
