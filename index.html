@@ -149,7 +149,9 @@
     const ingelogdeGebruiker = {
       naam: "Kirsten",
       werkgroepen: ["Dieren", "Klussen"],
-      magAllesZien: true,  // true = bestuur of coördinator onderhoud
+      // TIJDELIJK voor de demo: "?rol=bestuur" achter de link maakt Kirsten bestuurslid.
+      // Verwijderen zodra echt inloggen werkt!
+      magAllesZien: new URLSearchParams(location.search).get("rol") === "bestuur",
       isFrion: false        // true = Frion-begeleider
     };
 
